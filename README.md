@@ -24,7 +24,7 @@ Also updating the repo's is highly recommended (apt update && apt upgrade)
 
 
 ```bash
-bash -c "$(curl -fsSL https://github.com/deathline94/sing-REALITY-Box/blob/main/sing-REALITY-box.sh)"
+curl -fsSL https://github.com/deathline94/sing-REALITY-Box/raw/main/sing-REALITY-box.sh | bash
 ```
 
 ## Props
