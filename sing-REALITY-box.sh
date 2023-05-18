@@ -80,11 +80,41 @@ if ! command -v jq &> /dev/null; then
     fi
 fi
 
-# Download and install sing-box binary
-echo "Downloading and installing sing-box binary..."
-curl -sLo /root/sb https://github.com/SagerNet/sing-box/releases/download/v1.3-beta11/sing-box-1.3-beta11-linux-amd64.tar.gz && tar -xzf /root/sb && cp -f /root/sing-box-*/sing-box /root && rm -r /root/sb /root/sing-box-* && chown root:root /root/sing-box && chmod +x /root/sing-box
-echo "sing-box installation complete."
-echo
+# Fetch the latest (including pre-releases) release version number from GitHub API
+latest_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[0].name')
+
+# Detect server architecture
+arch=$(uname -m)
+
+# Map architecture names
+case ${arch} in
+    x86_64)
+        arch="amd64"
+        ;;
+    aarch64)
+        arch="arm64"
+        ;;
+    armv7l)
+        arch="armv7"
+        ;;
+esac
+
+# Prepare package names
+package_name="sing-box-${latest_version}-linux-${arch}"
+
+# Download the latest release package (.tar.gz) from GitHub
+curl -Lo "/root/${package_name}.tar.gz" "https://github.com/SagerNet/sing-box/releases/download/v${latest_version}/${package_name}.tar.gz"
+
+# Extract the package and move the binary to /root
+tar -xzf "/root/${package_name}.tar.gz" -C /root
+mv "/root/${package_name}/sing-box" /root/
+
+# Cleanup the package
+rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
+
+# Set the permissions
+chown root:root /root/sing-box
+chmod +x /root/sing-box
 
 # Generate key pair
 echo "Generating key pair..."
