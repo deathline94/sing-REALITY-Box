@@ -80,6 +80,70 @@ if ! command -v jq &> /dev/null; then
     fi
 fi
 
+# Check if reality.json, sing-box, and sing-box.service already exist
+if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
+
+    echo "Reality files already exist."
+    echo ""
+    echo "Please choose an option:"
+    echo ""
+    echo "1. Reinstall"
+    echo "2. Modify"
+    echo "3. Uninstall"
+    echo ""
+    read -p "Enter your choice (1-3): " choice
+
+    case $choice in
+        1)
+            echo "Reinstalling..."
+            # Uninstall previous installation
+            systemctl stop sing-box
+            systemctl disable sing-box
+            rm /etc/systemd/system/sing-box.service
+            rm /root/reality.json
+            rm /root/sing-box
+
+            # Proceed with installation
+            ;;
+        2)
+            echo "Modifying..."
+            # Ask for listen port
+            read -p "Enter desired listen port (default: 443): " listen_port
+            listen_port=${listen_port:-443}
+
+            # Ask for server name (sni)
+            read -p "Enter server name/SNI (default: telewebion.com): " server_name
+            server_name=${server_name:-telewebion.com}
+
+            # Modify reality.json with new settings
+            jq --arg listen_port "$listen_port" --arg server_name "$server_name" '.inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name' /root/reality.json > /root/reality_modified.json
+            mv /root/reality_modified.json /root/reality.json
+
+            # Restart sing-box service
+            systemctl restart sing-box
+            echo "DONE!"
+            exit 0
+            ;;
+        3)
+            echo "Uninstalling..."
+            # Stop and disable sing-box service
+            systemctl stop sing-box
+            systemctl disable sing-box
+
+            # Remove files
+            rm /etc/systemd/system/sing-box.service
+            rm /root/reality.json
+            rm /root/sing-box
+	    echo "DONE!"
+            exit 0
+            ;;
+        *)
+            echo "Invalid choice. Exiting."
+            exit 1
+            ;;
+    esac
+fi
+
 # Fetch the latest (including pre-releases) release version number from GitHub API
 latest_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[0].name')
 
@@ -103,7 +167,7 @@ esac
 package_name="sing-box-${latest_version}-linux-${arch}"
 
 # Download the latest release package (.tar.gz) from GitHub
-curl -Lo "/root/${package_name}.tar.gz" "https://github.com/SagerNet/sing-box/releases/download/v${latest_version}/${package_name}.tar.gz"
+curl -sLo "/root/${package_name}.tar.gz" "https://github.com/SagerNet/sing-box/releases/download/v${latest_version}/${package_name}.tar.gz"
 
 # Extract the package and move the binary to /root
 tar -xzf "/root/${package_name}.tar.gz" -C /root
@@ -115,6 +179,7 @@ rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
 # Set the permissions
 chown root:root /root/sing-box
 chmod +x /root/sing-box
+
 
 # Generate key pair
 echo "Generating key pair..."
