@@ -107,22 +107,28 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/
             ;;
         2)
             echo "Modifying..."
-            # Ask for listen port
-            read -p "Enter desired listen port (default: 443): " listen_port
-            listen_port=${listen_port:-443}
+	    # Get current listen port
+	    current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/reality.json)
 
-            # Ask for server name (sni)
-            read -p "Enter server name/SNI (default: telewebion.com): " server_name
-            server_name=${server_name:-telewebion.com}
+	    # Ask for listen port
+	    read -p "Enter desired listen port (Current port is $current_listen_port): " listen_port
+	    listen_port=${listen_port:-$current_listen_port}
 
-            # Modify reality.json with new settings
-            jq --arg listen_port "$listen_port" --arg server_name "$server_name" '.inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name' /root/reality.json > /root/reality_modified.json
-            mv /root/reality_modified.json /root/reality.json
+	    # Get current server name
+	    current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/reality.json)
 
-            # Restart sing-box service
-            systemctl restart sing-box
-            echo "DONE!"
-            exit 0
+	    # Ask for server name (sni)
+	    read -p "Enter server name/SNI (Current value is $current_server_name): " server_name
+	    server_name=${server_name:-$current_server_name}
+
+	    # Modify reality.json with new settings
+	    jq --arg listen_port "$listen_port" --arg server_name "$server_name" '.inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' /root/reality.json > /root/reality_modified.json
+	    mv /root/reality_modified.json /root/reality.json
+
+	    # Restart sing-box service
+	    systemctl restart sing-box
+	    echo "DONE!"
+	    exit 0
             ;;
         3)
             echo "Uninstalling..."
