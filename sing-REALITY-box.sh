@@ -13,52 +13,7 @@ print_with_delay() {
 # Introduction animation
 echo ""
 echo ""
-print_with_delay "s" 0.1
-print_with_delay "i" 0.1
-print_with_delay "n" 0.1
-print_with_delay "g" 0.1
-print_with_delay "-" 0.1
-print_with_delay "R" 0.1
-print_with_delay "E" 0.1
-print_with_delay "A" 0.1
-print_with_delay "L" 0.1
-print_with_delay "I" 0.1
-print_with_delay "T" 0.1
-print_with_delay "Y" 0.1
-print_with_delay "-" 0.1
-print_with_delay "b" 0.1
-print_with_delay "o" 0.1
-print_with_delay "x" 0.1
-print_with_delay " " 0.1
-print_with_delay "b" 0.1
-print_with_delay "y" 0.1
-print_with_delay " " 0.1
-print_with_delay "D" 0.1
-print_with_delay "E" 0.1
-print_with_delay "A" 0.1
-print_with_delay "T" 0.1
-print_with_delay "H" 0.1
-print_with_delay "L" 0.1
-print_with_delay "I" 0.1
-print_with_delay "N" 0.1
-print_with_delay "E" 0.1
-print_with_delay " " 0.1
-print_with_delay "|" 0.1
-print_with_delay " " 0.1
-print_with_delay "n" 0.1
-print_with_delay "a" 0.1
-print_with_delay "m" 0.1
-print_with_delay "e" 0.1
-print_with_delay "l" 0.1
-print_with_delay "e" 0.1
-print_with_delay "s" 0.1
-print_with_delay " " 0.1
-print_with_delay "g" 0.1
-print_with_delay "h" 0.1
-print_with_delay "o" 0.1
-print_with_delay "u" 0.1
-print_with_delay "l" 0.1
-print_with_delay ""
+print_with_delay "sing-REALITY-box by DEATHLINE | nameles ghoul" 0.1
 echo ""
 echo ""
 
@@ -80,9 +35,13 @@ if ! command -v jq &> /dev/null; then
     fi
 fi
 
-# Check if reality.json, sing-box, and sing-box.service already exist
-if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
+# Set file paths as variables
+REALITY_FILE="/root/reality.json"
+SING_BOX_BINARY="/root/sing-box"
+SERVICE_FILE="/etc/systemd/system/sing-box.service"
 
+# Check if reality.json, sing-box, and sing-box.service already exist
+if [ -f "$REALITY_FILE" ] && [ -f "$SING_BOX_BINARY" ] && [ -f "$SERVICE_FILE" ]; then
     echo "Reality files already exist."
     echo ""
     echo "Please choose an option:"
@@ -99,36 +58,36 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/
             # Uninstall previous installation
             systemctl stop sing-box
             systemctl disable sing-box
-            rm /etc/systemd/system/sing-box.service
-            rm /root/reality.json
-            rm /root/sing-box
+            rm "$SERVICE_FILE"
+            rm "$REALITY_FILE"
+            rm "$SING_BOX_BINARY"
 
             # Proceed with installation
             ;;
         2)
             echo "Modifying..."
-	    # Get current listen port
-	    current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/reality.json)
+        # Get current listen port
+        current_listen_port=$(jq -r '.inbounds[0].listen_port' "$REALITY_FILE")
 
-	    # Ask for listen port
-	    read -p "Enter desired listen port (Current port is $current_listen_port): " listen_port
-	    listen_port=${listen_port:-$current_listen_port}
+        # Ask for listen port
+        read -p "Enter desired listen port (Current port is $current_listen_port): " listen_port
+        listen_port=${listen_port:-$current_listen_port}
 
-	    # Get current server name
-	    current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/reality.json)
+        # Get current server name
+        current_server_name=$(jq -r '.inbounds[0].tls.server_name' "$REALITY_FILE")
 
-	    # Ask for server name (sni)
-	    read -p "Enter server name/SNI (Current value is $current_server_name): " server_name
-	    server_name=${server_name:-$current_server_name}
+        # Ask for server name (sni)
+        read -p "Enter server name/SNI (Current value is $current_server_name): " server_name
+        server_name=${server_name:-$current_server_name}
 
-	    # Modify reality.json with new settings
-	    jq --arg listen_port "$listen_port" --arg server_name "$server_name" '.inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' /root/reality.json > /root/reality_modified.json
-	    mv /root/reality_modified.json /root/reality.json
+        # Modify reality.json with new settings
+        jq --arg listen_port "$listen_port" --arg server_name "$server_name" '.inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' "$REALITY_FILE" > "${REALITY_FILE}.tmp"
+            mv "${REALITY_FILE}.tmp" "$REALITY_FILE"
 
-	    # Restart sing-box service
-	    systemctl restart sing-box
-	    echo "DONE!"
-	    exit 0
+        # Restart sing-box service
+        systemctl restart sing-box
+        echo "DONE!"
+        exit 0
             ;;
         3)
             echo "Uninstalling..."
@@ -137,10 +96,11 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/
             systemctl disable sing-box
 
             # Remove files
-            rm /etc/systemd/system/sing-box.service
-            rm /root/reality.json
-            rm /root/sing-box
-	    echo "DONE!"
+            if ! rm "$SERVICE_FILE" "$REALITY_FILE" "$SING_BOX_BINARY"; then
+                echo "Error: Unable to remove one or more files. Aborting uninstallation."
+                exit 1
+            fi
+        echo "DONE!"
             exit 0
             ;;
         *)
@@ -154,19 +114,11 @@ fi
 latest_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[0].name')
 
 # Detect server architecture
-arch=$(uname -m)
-
-# Map architecture names
-case ${arch} in
-    x86_64)
-        arch="amd64"
-        ;;
-    aarch64)
-        arch="arm64"
-        ;;
-    armv7l)
-        arch="armv7"
-        ;;
+case $(uname -m) in
+    x86_64) arch="amd64" ;;
+    aarch64) arch="arm64" ;;
+    armv7l) arch="armv7" ;;
+    *) arch="unknown" ;;
 esac
 
 # Prepare package names
