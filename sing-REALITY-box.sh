@@ -117,6 +117,23 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/
 	    # Get current server name
 	    current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/reality.json)
 
+
+      # Get uuid
+      uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/reality.json)
+
+
+      # Get short_id
+      short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/reality.json)
+
+      # Get public key 
+      public_key=`cat /root/public_key.txt`
+
+      # Get Server ip
+      server_ip=$(curl -s https://api.ipify.org)
+
+
+
+
 	    # Ask for server name (sni)
 	    read -p "Enter server name/SNI (Current value is $current_server_name): " server_name
 	    server_name=${server_name:-$current_server_name}
@@ -124,6 +141,15 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/
 	    # Modify reality.json with new settings
 	    jq --arg listen_port "$listen_port" --arg server_name "$server_name" '.inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' /root/reality.json > /root/reality_modified.json
 	    mv /root/reality_modified.json /root/reality.json
+
+
+
+      server_link="vless://$uuid@$server_ip:$listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
+      server_link_base64=$(printf $server_link | base64 -w0);
+
+      echo "Here is the link for v2rayN and v2rayNG :"
+      echo ""
+      echo $server_link_base64
 
 	    # Restart sing-box service
 	    systemctl restart sing-box
