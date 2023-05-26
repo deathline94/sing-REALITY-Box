@@ -280,6 +280,11 @@ LimitNOFILE=infinity
 WantedBy=multi-user.target
 EOF
 
+#store public key in a file
+touch /root/public_key.txt
+echo $public_key > /root/public_key.txt
+
+
 # Check configuration and start the service
 if /root/sing-box check -c /root/reality.json; then
     echo "Configuration checked successfully. Starting sing-box service..."
