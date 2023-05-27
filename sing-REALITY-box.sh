@@ -126,7 +126,9 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/
       short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/reality.json)
 
       # Get public key 
+      openssl aes-256-cbc -d -a -pbkdf2 -in /root/public_key.txt.enc -out /root/public_key.txt -pass pass:$server_ip
       public_key=`cat /root/public_key.txt`
+      rm -rf /root/public_key.txt
 
       # Get Server ip
       server_ip=$(curl -s https://api.ipify.org)
@@ -309,6 +311,8 @@ EOF
 #store public key in a file
 touch /root/public_key.txt
 echo $public_key > /root/public_key.txt
+openssl aes-256-cbc -a -salt -pbkdf2 -in /root/public_key.txt -out /root/public_key.txt.enc -pass pass:$server_ip
+rm -rf /root/public_key.txt
 
 
 # Check configuration and start the service
