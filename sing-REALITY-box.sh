@@ -173,7 +173,7 @@ esac
 package_name="sing-box-${latest_version}-linux-${arch}"
 
 # Download the latest release package (.tar.gz) from GitHub
-curl -sLo "/root/${package_name}.tar.gz" "https://github.com/SagerNet/sing-box/releases/download/${latest_version}/${package_name}.tar.gz"
+curl -sLo "/root/${package_name}.tar.gz" "https://github.com/SagerNet/sing-box/releases/download/v${latest_version}/${package_name}.tar.gz"
 
 # Extract the package and move the binary to /root
 tar -xzf "/root/${package_name}.tar.gz" -C /root
