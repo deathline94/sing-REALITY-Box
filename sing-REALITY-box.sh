@@ -151,10 +151,12 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/
 fi
 
 # Fetch the latest (including pre-releases) release version number from GitHub API
-latest_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases/latest" | grep -P -m1 -o "(v[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}(-beta.[0-9]{1,})?)" | tr -d 'v')
+latest_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -P -m1 -o "(v[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}(-beta.[0-9]{1,})?)" | tr -d 'v')
+echo "Latest version: $latest_version"
 
 # Detect server architecture
 arch=$(uname -m)
+echo "Architecture: $arch"
 
 # Map architecture names
 case ${arch} in
@@ -169,15 +171,16 @@ case ${arch} in
         ;;
 esac
 
+
 # Prepare package names
 package_name="sing-box-${latest_version}-linux-${arch}"
 
 # Prepare download URL
 url="https://github.com/SagerNet/sing-box/releases/download/v${latest_version}/${package_name}.tar.gz"
-echo "URL: $url"
 
 # Download the latest release package (.tar.gz) from GitHub
-curl -sLo "/root/${latest_version}.tar.gz" "$url"
+curl -sLo "/root/${package_name}.tar.gz" "$url"
+
 
 # Extract the package and move the binary to /root
 tar -xzf "/root/${package_name}.tar.gz" -C /root
