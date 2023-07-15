@@ -152,9 +152,11 @@ fi
 
 # Fetch the latest (including pre-releases) release version number from GitHub API
 latest_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -P -m1 -o "(v[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}(-beta.[0-9]{1,})?)")
+echo "DEBUG: latest_version=${latest_version}"
 
 # Detect server architecture
 arch=$(uname -m)
+echo "DEBUG: arch=${arch}"
 
 # Map architecture names
 case ${arch} in
@@ -169,11 +171,21 @@ case ${arch} in
         ;;
 esac
 
+echo "DEBUG: mapped arch=${arch}"
+
 # Prepare package names
 package_name="sing-box-${latest_version}-linux-${arch}"
+echo "DEBUG: package_name=${package_name}"
 
 # Download the latest release package (.tar.gz) from GitHub
-curl -sLo "/root/${package_name}.tar.gz" "https://github.com/SagerNet/sing-box/releases/download/v${latest_version}/${package_name}.tar.gz"
+curl -sLo "/root/${package_name}.tar.gz" "https://github.com/SagerNet/sing-box/releases/download/${latest_version}/${package_name}.tar.gz"
+
+# Check if the file exists
+if [ -f "/root/${package_name}.tar.gz" ]; then
+    echo "DEBUG: File downloaded successfully"
+else
+    echo "DEBUG: Failed to download file"
+fi
 
 # Extract the package and move the binary to /root
 tar -xzf "/root/${package_name}.tar.gz" -C /root
