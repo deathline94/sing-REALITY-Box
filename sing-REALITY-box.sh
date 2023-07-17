@@ -89,25 +89,25 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
     echo ""
     echo "1. Reinstall"
     echo "2. Modify"
-	echo "3. Show Current Link"
+    echo "3. Show Current Link"
     echo "4. Uninstall"
     echo ""
     read -p "Enter your choice (1-4): " choice
 
     case $choice in
         1)
-            echo "Reinstalling..."
-            # Uninstall previous installation
-            systemctl stop sing-box
-            systemctl disable sing-box
-            rm /etc/systemd/system/sing-box.service
-            rm /root/reality.json
-            rm /root/sing-box
-
-            # Proceed with installation
-            ;;
+	            	echo "Reinstalling..."
+	            	# Uninstall previous installation
+	            	systemctl stop sing-box
+	            	systemctl disable sing-box
+	           	rm /etc/systemd/system/sing-box.service
+	            	rm /root/reality.json
+	            	rm /root/sing-box
+	
+	            	# Proceed with installation
+	            	;;
         2)
-            echo "Modifying..."
+            		echo "Modifying..."
 			# Get current listen port
 			current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/reality.json)
 
@@ -158,8 +158,8 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 			echo ""
 			echo ""
 			exit 0
-            ;;
-		3)
+            		;;
+	3)
 			echo "Showing current link..."
 			
 			# Get current listen port
@@ -190,25 +190,25 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 			exit 0
 			;;	
         4)
-            echo "Uninstalling..."
-            # Stop and disable sing-box service
-            systemctl stop sing-box
-            systemctl disable sing-box
-
-            # Remove files
-            rm /etc/systemd/system/sing-box.service
-            rm /root/reality.json
-            rm /root/sing-box
+	            	echo "Uninstalling..."
+	            	# Stop and disable sing-box service
+	            	systemctl stop sing-box
+	            	systemctl disable sing-box
+	
+	            	# Remove files
+	            	rm /etc/systemd/system/sing-box.service
+	            	rm /root/reality.json
+	            	rm /root/sing-box
 			rm /root/public.key.b64
-	    echo "DONE!"
-            exit 0
-            ;;
-        *)
-            echo "Invalid choice. Exiting."
-            exit 1
-            ;;
-    esac
-fi
+		    	echo "DONE!"
+	            	exit 0
+	            	;;
+	        	*)
+	            	echo "Invalid choice. Exiting."
+	            	exit 1
+	            	;;
+	    esac
+	fi
 
 # Fetch the latest (including pre-releases) release version number from GitHub API
 latest_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -P -m1 -o "(v[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}(-beta.[0-9]{1,})?)" | tr -d 'v')
