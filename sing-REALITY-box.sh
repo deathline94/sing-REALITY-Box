@@ -81,7 +81,7 @@ if ! command -v jq &> /dev/null; then
 fi
 
 # Check if reality.json, sing-box, and sing-box.service already exist
-if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
+if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.key.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
 
     echo "Reality files already exist."
     echo ""
@@ -89,9 +89,10 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/
     echo ""
     echo "1. Reinstall"
     echo "2. Modify"
-    echo "3. Uninstall"
+	echo "3. Show Current Link"
+    echo "4. Uninstall"
     echo ""
-    read -p "Enter your choice (1-3): " choice
+    read -p "Enter your choice (1-4): " choice
 
     case $choice in
         1)
@@ -107,30 +108,88 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/
             ;;
         2)
             echo "Modifying..."
-	    # Get current listen port
-	    current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/reality.json)
+			# Get current listen port
+			current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/reality.json)
 
-	    # Ask for listen port
-	    read -p "Enter desired listen port (Current port is $current_listen_port): " listen_port
-	    listen_port=${listen_port:-$current_listen_port}
+			# Ask for listen port
+			read -p "Enter desired listen port (Current port is $current_listen_port): " listen_port
+			listen_port=${listen_port:-$current_listen_port}
 
-	    # Get current server name
-	    current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/reality.json)
+			# Get current server name
+			current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/reality.json)
 
-	    # Ask for server name (sni)
-	    read -p "Enter server name/SNI (Current value is $current_server_name): " server_name
-	    server_name=${server_name:-$current_server_name}
+			# Ask for server name (sni)
+			read -p "Enter server name/SNI (Current value is $current_server_name): " server_name
+			server_name=${server_name:-$current_server_name}
 
-	    # Modify reality.json with new settings
-	    jq --arg listen_port "$listen_port" --arg server_name "$server_name" '.inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' /root/reality.json > /root/reality_modified.json
-	    mv /root/reality_modified.json /root/reality.json
+			# Modify reality.json with new settings
+			jq --arg listen_port "$listen_port" --arg server_name "$server_name" '.inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' /root/reality.json > /root/reality_modified.json
+			mv /root/reality_modified.json /root/reality.json
 
-	    # Restart sing-box service
-	    systemctl restart sing-box
-	    echo "DONE!"
-	    exit 0
+			# Restart sing-box service
+			systemctl restart sing-box
+			echo ""
+			echo ""
+			echo "New Link:"
+			echo ""
+			echo ""
+			# Get current listen port
+			current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/reality.json)
+
+			# Get current server name
+			current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/reality.json)
+
+			# Get the UUID
+			uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/reality.json)
+
+			# Get the public key from the file, decoding it from base64
+			public_key=$(base64 --decode /root/public.key.b64)
+			
+			# Get the short ID
+			short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/reality.json)
+			
+			# Retrieve the server IP address
+			server_ip=$(curl -s https://api.ipify.org)
+			
+			# Generate the link
+			server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
+			
+			echo "$server_link"
+			echo ""
+			echo ""
+			exit 0
             ;;
-        3)
+		3)
+			echo "Showing current link..."
+			
+			# Get current listen port
+			current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/reality.json)
+
+			# Get current server name
+			current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/reality.json)
+
+			# Get the UUID
+			uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/reality.json)
+
+			# Get the public key from the file, decoding it from base64
+			public_key=$(base64 --decode /root/public.key.b64)
+			
+			# Get the short ID
+			short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/reality.json)
+			
+			# Retrieve the server IP address
+			server_ip=$(curl -s https://api.ipify.org)
+			
+			# Generate the link
+			server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
+			echo ""
+			echo ""
+			echo "$server_link"
+			echo ""
+			echo ""
+			exit 0
+			;;	
+        4)
             echo "Uninstalling..."
             # Stop and disable sing-box service
             systemctl stop sing-box
@@ -140,6 +199,7 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/etc/systemd/
             rm /etc/systemd/system/sing-box.service
             rm /root/reality.json
             rm /root/sing-box
+			rm /root/public.key.b64
 	    echo "DONE!"
             exit 0
             ;;
@@ -203,6 +263,9 @@ echo
 # Extract private key and public key
 private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
 public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
+
+# Save the public key in a file using base64 encoding
+echo "$public_key" | base64 > /root/public.key.b64
 
 # Generate necessary values
 uuid=$(/root/sing-box generate uuid)
