@@ -372,10 +372,12 @@ if /root/sing-box check -c /root/reality.json; then
     echo "UUID: $uuid"
     echo ""
     echo ""
-    echo ""
     echo "Here is the link for v2rayN and v2rayNG :"
     echo ""
+    echo ""
     echo "$server_link"
+    echo ""
+    echo ""
 else
     echo "Error in configuration. Aborting."
 fi
