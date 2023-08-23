@@ -12,7 +12,7 @@ print_with_delay() {
 }
 
 # Introduction animation
-print_with_delay "sing-REALITY-box by DEATHLINE | @NamelessGhoul" 0.1
+print_with_delay "sing-REALITY-box by DEATHLINE | @NamelesGhoul" 0.1
 echo ""
 echo ""
 
