@@ -2,63 +2,17 @@
 
 # Function to print characters with delay
 print_with_delay() {
-    text=$1
-    delay=$2
+    text="$1"
+    delay="$2"
     for ((i = 0; i < ${#text}; i++)); do
         echo -n "${text:$i:1}"
         sleep $delay
     done
+    echo
 }
 
 # Introduction animation
-echo ""
-echo ""
-print_with_delay "s" 0.1
-print_with_delay "i" 0.1
-print_with_delay "n" 0.1
-print_with_delay "g" 0.1
-print_with_delay "-" 0.1
-print_with_delay "R" 0.1
-print_with_delay "E" 0.1
-print_with_delay "A" 0.1
-print_with_delay "L" 0.1
-print_with_delay "I" 0.1
-print_with_delay "T" 0.1
-print_with_delay "Y" 0.1
-print_with_delay "-" 0.1
-print_with_delay "b" 0.1
-print_with_delay "o" 0.1
-print_with_delay "x" 0.1
-print_with_delay " " 0.1
-print_with_delay "b" 0.1
-print_with_delay "y" 0.1
-print_with_delay " " 0.1
-print_with_delay "D" 0.1
-print_with_delay "E" 0.1
-print_with_delay "A" 0.1
-print_with_delay "T" 0.1
-print_with_delay "H" 0.1
-print_with_delay "L" 0.1
-print_with_delay "I" 0.1
-print_with_delay "N" 0.1
-print_with_delay "E" 0.1
-print_with_delay " " 0.1
-print_with_delay "|" 0.1
-print_with_delay " " 0.1
-print_with_delay "n" 0.1
-print_with_delay "a" 0.1
-print_with_delay "m" 0.1
-print_with_delay "e" 0.1
-print_with_delay "l" 0.1
-print_with_delay "e" 0.1
-print_with_delay "s" 0.1
-print_with_delay " " 0.1
-print_with_delay "g" 0.1
-print_with_delay "h" 0.1
-print_with_delay "o" 0.1
-print_with_delay "u" 0.1
-print_with_delay "l" 0.1
-print_with_delay ""
+print_with_delay "sing-REALITY-box by DEATHLINE | @NamelessGhoul" 0.1
 echo ""
 echo ""
 
@@ -67,8 +21,8 @@ echo ""
 if ! command -v jq &> /dev/null; then
     echo "jq is not installed. Installing..."
     if [ -n "$(command -v apt)" ]; then
-        apt update
-        apt install -y jq
+        apt update > /dev/null 2>&1
+        apt install -y jq > /dev/null 2>&1
     elif [ -n "$(command -v yum)" ]; then
         yum install -y epel-release
         yum install -y jq
@@ -99,7 +53,7 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 	            	echo "Reinstalling..."
 	            	# Uninstall previous installation
 	            	systemctl stop sing-box
-	            	systemctl disable sing-box
+	            	systemctl disable sing-box > /dev/null 2>&1
 	           	rm /etc/systemd/system/sing-box.service
 	            	rm /root/reality.json
 	            	rm /root/sing-box
@@ -193,7 +147,7 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 	            	echo "Uninstalling..."
 	            	# Stop and disable sing-box service
 	            	systemctl stop sing-box
-	            	systemctl disable sing-box
+	            	systemctl disable sing-box > /dev/null 2>&1
 	
 	            	# Remove files
 	            	rm /etc/systemd/system/sing-box.service
@@ -354,7 +308,7 @@ EOF
 if /root/sing-box check -c /root/reality.json; then
     echo "Configuration checked successfully. Starting sing-box service..."
     systemctl daemon-reload
-    systemctl enable sing-box
+    systemctl enable sing-box > /dev/null 2>&1
     systemctl start sing-box
     systemctl restart sing-box
 
