@@ -44,9 +44,10 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
     echo "1. Reinstall"
     echo "2. Modify"
     echo "3. Show Current Link"
-    echo "4. Uninstall"
+    echo "4. Switch Version (Stable/Alpha)"
+    echo "5. Uninstall"
     echo ""
-    read -p "Enter your choice (1-4): " choice
+    read -p "Enter your choice (1-5): " choice
 
     case $choice in
         1)
@@ -142,8 +143,63 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 			echo ""
 			echo ""
 			exit 0
-			;;	
-        4)
+			;;
+		4)
+			echo "Switching Version..."
+			echo ""
+			# Extract the current version
+			current_version_tag=$(/root/sing-box version | grep 'sing-box version' | awk '{print $3}')
+
+			# Fetch the latest stable and alpha version tags
+			latest_stable_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '[.[] | select(.prerelease==false)][0].tag_name')
+			latest_alpha_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '[.[] | select(.prerelease==true)][0].tag_name')
+
+			# Determine current version type (stable or alpha)
+			if [[ $current_version_tag == *"-alpha"* ]]; then
+				echo "Currently on Alpha. Switching to Stable..."
+				echo ""
+				new_version_tag=$latest_stable_version
+			else
+				echo "Currently on Stable. Switching to Alpha..."
+				echo ""
+				new_version_tag=$latest_alpha_version
+			fi
+
+			# Stop the service before updating
+			systemctl stop sing-box
+
+			# Download and replace the binary
+			arch=$(uname -m)
+			case $arch in
+				x86_64) arch="amd64" ;;
+				aarch64) arch="arm64" ;;
+				armv7l) arch="armv7" ;;
+			esac
+
+			package_name="sing-box-${new_version_tag#v}-linux-${arch}"
+			url="https://github.com/SagerNet/sing-box/releases/download/${new_version_tag}/${package_name}.tar.gz"
+
+			curl -sLo "/root/${package_name}.tar.gz" "$url"
+			tar -xzf "/root/${package_name}.tar.gz" -C /root
+			mv "/root/${package_name}/sing-box" /root/sing-box
+
+			# Cleanup the package
+			rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
+
+			# Set the permissions
+			chown root:root /root/sing-box
+			chmod +x /root/sing-box
+
+			# Restart the service with the new binary
+			systemctl daemon-reload
+			systemctl start sing-box
+
+			echo "Version switched and service restarted with the new binary."
+			echo ""
+			exit 0
+			;;
+
+    5)
 	            	echo "Uninstalling..."
 	            	# Stop and disable sing-box service
 	            	systemctl stop sing-box
@@ -164,27 +220,41 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 	    esac
 	fi
 
-# Fetch the latest (including pre-releases) release version number from GitHub API
-latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | head -n 1)
-latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
-echo "Latest version: $latest_version"
+		echo "Please choose the version to install:"
+		echo "1. Stable"
+		echo "2. Alpha"
+		read -p "Enter your choice (1-2, default: 1): " version_choice
+		version_choice=${version_choice:-1}
 
-# Detect server architecture
-arch=$(uname -m)
-echo "Architecture: $arch"
+		# Set the tag based on user choice
+		if [ "$version_choice" -eq 2 ]; then
+			echo "Installing Alpha version..."
+			latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '[.[] | select(.prerelease==true)][0].tag_name')
+		else
+			echo "Installing Stable version..."
+			latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '[.[] | select(.prerelease==false)][0].tag_name')
+		fi
 
-# Map architecture names
-case ${arch} in
-    x86_64)
-        arch="amd64"
-        ;;
-    aarch64)
-        arch="arm64"
-        ;;
-    armv7l)
-        arch="armv7"
-        ;;
-esac
+		# No need to fetch the latest version tag again, it's already set based on user choice
+		latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
+		echo "Latest version: $latest_version"
+
+		# Detect server architecture
+		arch=$(uname -m)
+		echo "Architecture: $arch"
+
+		# Map architecture names
+		case ${arch} in
+			x86_64)
+				arch="amd64"
+				;;
+			aarch64)
+				arch="arm64"
+				;;
+			armv7l)
+				arch="armv7"
+				;;
+		esac
 
 # Prepare package names
 package_name="sing-box-${latest_version}-linux-${arch}"
