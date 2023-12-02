@@ -221,7 +221,8 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 	    esac
 	fi
 
-		echo "Please choose the version to install:"
+		echo ""
+  		echo "Please choose the version to install:"
   		echo ""
 		echo "1. Stable"
 		echo "2. Alpha"
