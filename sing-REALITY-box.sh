@@ -145,7 +145,8 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 			exit 0
 			;;
 		4)
-			echo "Switching Version..."
+			echo ""
+   			echo "Switching Version..."
 			echo ""
 			# Extract the current version
 			current_version_tag=$(/root/sing-box version | grep 'sing-box version' | awk '{print $3}')
@@ -221,27 +222,34 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 	fi
 
 		echo "Please choose the version to install:"
+  		echo ""
 		echo "1. Stable"
 		echo "2. Alpha"
+  		echo ""
 		read -p "Enter your choice (1-2, default: 1): " version_choice
+  		echo ""
 		version_choice=${version_choice:-1}
 
 		# Set the tag based on user choice
 		if [ "$version_choice" -eq 2 ]; then
 			echo "Installing Alpha version..."
+   			echo ""
 			latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '[.[] | select(.prerelease==true)][0].tag_name')
 		else
 			echo "Installing Stable version..."
+   			echo ""
 			latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '[.[] | select(.prerelease==false)][0].tag_name')
 		fi
 
 		# No need to fetch the latest version tag again, it's already set based on user choice
 		latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
 		echo "Latest version: $latest_version"
+  		echo ""
 
 		# Detect server architecture
 		arch=$(uname -m)
 		echo "Architecture: $arch"
+  		echo ""
 
 		# Map architecture names
 		case ${arch} in
@@ -280,9 +288,10 @@ chmod +x /root/sing-box
 
 # Generate key pair
 echo "Generating key pair..."
+echo ""
 key_pair=$(/root/sing-box generate reality-keypair)
 echo "Key pair generation complete."
-echo
+echo ""
 
 # Extract private key and public key
 private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
@@ -301,6 +310,7 @@ listen_port=${listen_port:-443}
 echo ""
 # Ask for server name (sni)
 read -p "Enter server name/SNI (default: telewebion.com): " server_name
+echo ""
 server_name=${server_name:-telewebion.com}
 
 # Retrieve the server IP address
