@@ -1,9 +1,12 @@
-# sing-REALITY-Box
-One click REALITY installer on sing-box core
-
 # sing-REALITY-box
 
 sing-REALITY-box is the first one-click installer script to install REALITY on sing-box core !
+
+**If you think this project is helpful to you, you may want to give a**:star2:
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/namelesghoul)
+
+- USDT (TRC20): `TPsWRCNkYFxLx8HjToXrp8HehQs5J4u2Pe`
 ## Features
 
 - Easy installation and configuration
