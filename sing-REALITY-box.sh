@@ -16,6 +16,11 @@ print_with_delay "sing-REALITY-box by DEATHLINE | @NamelesGhoul" 0.1
 echo ""
 echo ""
 
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root."
+    exit 1
+fi
+
 
 # Check if jq is installed, and install it if not
 if ! command -v jq &> /dev/null; then
@@ -99,16 +104,16 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 
 			# Get the public key from the file, decoding it from base64
 			public_key=$(base64 --decode /root/public.key.b64)
-			
+
 			# Get the short ID
 			short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/reality.json)
-			
+
 			# Retrieve the server IP address
 			server_ip=$(curl -s https://api.ipify.org)
-			
+
 			# Generate the link
 			server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
-			
+
 			echo "$server_link"
 			echo ""
 			echo ""
@@ -116,7 +121,7 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
             		;;
 	3)
 			echo "Showing current link..."
-			
+
 			# Get current listen port
 			current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/reality.json)
 
@@ -128,13 +133,13 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 
 			# Get the public key from the file, decoding it from base64
 			public_key=$(base64 --decode /root/public.key.b64)
-			
+
 			# Get the short ID
 			short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/reality.json)
-			
+
 			# Retrieve the server IP address
 			server_ip=$(curl -s https://api.ipify.org)
-			
+
 			# Generate the link
 			server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
 			echo ""
@@ -205,7 +210,7 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 	            	# Stop and disable sing-box service
 	            	systemctl stop sing-box
 	            	systemctl disable sing-box > /dev/null 2>&1
-	
+
 	            	# Remove files
 	            	rm /etc/systemd/system/sing-box.service
 	            	rm /root/reality.json
@@ -329,9 +334,6 @@ jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg pr
       "tag": "vless-in",
       "listen": "::",
       "listen_port": ($listen_port | tonumber),
-      "sniff": true,
-      "sniff_override_destination": true,
-      "domain_strategy": "ipv4_only",
       "users": [
         {
           "uuid": $uuid,
@@ -341,7 +343,7 @@ jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg pr
       "tls": {
         "enabled": true,
         "server_name": $server_name,
-          "reality": {
+        "reality": {
           "enabled": true,
           "handshake": {
             "server": $server_name,
@@ -362,7 +364,20 @@ jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg pr
       "type": "block",
       "tag": "block"
     }
-  ]
+  ],
+  "route": {
+    "rules": [
+      {
+        "inbound": "vless-in",
+        "action": "resolve",
+        "strategy": "ipv4_only"
+      },
+      {
+        "inbound": "vless-in",
+        "action": "sniff"
+      }
+    ]
+  }
 }' > /root/reality.json
 
 # Create sing-box.service
@@ -416,4 +431,3 @@ if /root/sing-box check -c /root/reality.json; then
 else
     echo "Error in configuration. Aborting."
 fi
-
